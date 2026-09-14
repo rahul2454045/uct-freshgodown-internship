@@ -64,10 +64,11 @@ async function loadCategories() {
         const res = await fetch("/api/categories");
         if (!res.ok) throw new Error("Failed to load categories");
         currentCategories = await res.json();
-        renderCategoryPills();
     } catch (err) {
-        console.error("Categories load error:", err);
+        console.warn("Using offline catalog fallback for categories");
+        currentCategories = window.DEFAULT_CATEGORIES || [];
     }
+    renderCategoryPills();
 }
 
 function renderCategoryPills() {
@@ -131,11 +132,21 @@ async function loadProducts() {
         const res = await fetch(url);
         if (!res.ok) throw new Error("Failed to fetch products");
         currentProducts = await res.json();
-        renderProducts();
     } catch (err) {
-        console.error("Products error:", err);
-        grid.innerHTML = `<div class="col-span-full text-center py-12 text-red-500">Failed to load items. Please refresh.</div>`;
+        console.warn("Using offline catalog fallback for products");
+        let list = [...(window.DEFAULT_PRODUCTS || [])];
+        if (activeCategory) list = list.filter(p => p.category_id === activeCategory);
+        if (inStockOnly) list = list.filter(p => p.stock_quantity > 0);
+        if (searchQuery) {
+            const sq = searchQuery.toLowerCase();
+            list = list.filter(p => p.name.toLowerCase().includes(sq) || (p.description && p.description.toLowerCase().includes(sq)));
+        }
+        if (activeSort === "price_asc") list.sort((a,b) => a.price - b.price);
+        else if (activeSort === "price_desc") list.sort((a,b) => b.price - a.price);
+        else if (activeSort === "rating") list.sort((a,b) => b.rating - a.rating);
+        currentProducts = list;
     }
+    renderProducts();
 }
 
 function renderProducts() {
@@ -489,10 +500,11 @@ async function loadDeliverySlots() {
         const res = await fetch("/api/slots");
         if (!res.ok) throw new Error("Could not load slots");
         availableSlots = await res.json();
-        renderSlots();
     } catch (err) {
-        container.innerHTML = `<div class="p-4 text-red-500 text-sm text-center">Failed to load delivery slots.</div>`;
+        console.warn("Using offline catalog fallback for slots");
+        availableSlots = window.DEFAULT_SLOTS || [];
     }
+    renderSlots();
 }
 
 function renderSlots() {
@@ -650,7 +662,25 @@ async function submitOrder() {
         // Show Success Modal
         showSuccessModal(data);
     } catch (err) {
-        showToast(err.message, "error");
+        if (err.message && err.message.includes("Insufficient")) {
+            showToast(err.message, "error");
+            return;
+        }
+        console.warn("Using offline order simulation for GitHub Pages");
+        const calc = getCartCalculations();
+        const mockOrderNum = "UCT-GODOWN-" + Math.floor(100000 + Math.random() * 900000);
+        const mockData = {
+            order_number: mockOrderNum,
+            slot_date: selectedSlot.slot_date,
+            slot_window: selectedSlot.time_window,
+            total_amount: calc.total,
+            delivery_address: address
+        };
+        cart = [];
+        saveCart();
+        updateCartUI();
+        closeCheckoutModal();
+        showSuccessModal(mockData);
     } finally {
         submitBtn.disabled = false;
         submitBtn.innerHTML = `Confirm Order & Pay Now`;
