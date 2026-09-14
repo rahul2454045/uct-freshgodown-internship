@@ -1,0 +1,162 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Delivery Tracking | {{ app_name }}</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Leaflet Map CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col font-sans">
+
+    <!-- Top Navigation -->
+    <header class="glass-nav border-b border-slate-200 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <a href="/" class="flex items-center gap-2 text-slate-900 font-black text-lg">
+                <span>🥬</span>
+                <span>FreshGodown</span>
+                <span class="text-xs bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">UCT</span>
+            </a>
+            <div class="flex items-center gap-3 text-xs">
+                <a href="/" class="px-3 py-1.5 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 font-semibold text-slate-700">
+                    ← Back to Store
+                </a>
+                <a href="/admin" class="px-3 py-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-semibold">
+                    Godown Portal
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Tracking Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
+
+        {% if not order_exists %}
+        <div class="bg-white rounded-3xl p-12 text-center max-w-lg mx-auto border border-slate-200 shadow-sm">
+            <div class="text-4xl mb-3">🔍</div>
+            <h2 class="text-xl font-bold text-slate-900 mb-2">Order Not Found</h2>
+            <p class="text-xs text-slate-500 mb-6">The order number "{{ order_number }}" does not exist in our central godown records.</p>
+            <a href="/" class="px-5 py-2.5 bg-emerald-600 text-white text-xs font-bold rounded-xl hover:bg-emerald-700">
+                Return to Storefront
+            </a>
+        </div>
+        {% else %}
+
+        <!-- Order Overview Header -->
+        <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm mb-6 flex flex-wrap items-center justify-between gap-4">
+            <div>
+                <div class="flex items-center gap-3 mb-1">
+                    <h1 class="text-xl font-black text-slate-900">
+                        Order <span id="orderNumberVal" class="text-emerald-700 font-mono">{{ order_number }}</span>
+                    </h1>
+                    <span id="orderStatusBadge" class="px-3 py-1 bg-amber-100 text-amber-800 font-bold rounded-full text-xs uppercase tracking-wider animate-pulse">
+                        OUT FOR DELIVERY
+                    </span>
+                </div>
+                <p class="text-xs text-slate-500 flex items-center gap-2">
+                    <span>📅 Scheduled Slot: <strong id="trackSlotInfo" class="text-slate-800">Loading...</strong></span>
+                    <span>•</span>
+                    <span>📍 Destination: <strong id="trackAddress" class="text-slate-800">Loading...</strong></span>
+                </p>
+            </div>
+
+            <!-- Dynamic Live ETA Card -->
+            <div class="bg-gradient-to-br from-emerald-600 to-teal-700 text-white px-6 py-3.5 rounded-2xl shadow-md flex items-center gap-4">
+                <div class="text-3xl">⏱️</div>
+                <div>
+                    <div class="text-[11px] font-bold text-emerald-200 uppercase tracking-wider">Dynamic ETA</div>
+                    <div id="etaMinutesVal" class="text-2xl font-black tracking-tight">18 mins</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm mb-6">
+            <div class="flex items-center justify-between text-xs font-bold text-slate-700 mb-2">
+                <span>Fulfillment & Dispatch Progress</span>
+                <span class="text-emerald-600 font-mono">Live Telemetry Active</span>
+            </div>
+            <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                <div id="progressPercentage" class="bg-emerald-500 h-2.5 rounded-full transition-all duration-700" style="width: 50%"></div>
+            </div>
+        </div>
+
+        <!-- Grid: Interactive Map + Delivery Milestones -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            <!-- Left: Live Geolocation Map -->
+            <div class="lg:col-span-8 bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-2">
+                            <span class="text-lg">🗺️</span>
+                            <h3 class="font-extrabold text-slate-900 text-sm">Live GPS Delivery Tracking</h3>
+                        </div>
+                        <div class="flex items-center gap-2 text-[11px] text-slate-500">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                            <span>Updating coordinates every 5s</span>
+                        </div>
+                    </div>
+
+                    <!-- Leaflet Map Element -->
+                    <div id="trackingMap" class="shadow-inner border border-slate-200"></div>
+                </div>
+
+                <!-- Driver Contact Card -->
+                <div class="mt-4 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-4 bg-slate-50 p-4 rounded-2xl">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center text-2xl font-bold">
+                            👨‍🌾
+                        </div>
+                        <div>
+                            <div class="text-[11px] text-slate-400 font-semibold uppercase">Assigned Delivery Executive</div>
+                            <h4 id="driverName" class="font-extrabold text-slate-900 text-sm">Ramesh Verma</h4>
+                            <div class="text-xs text-slate-500 flex items-center gap-1.5">
+                                <span id="driverVehicle">Electric Cargo Van</span>
+                                <span>•</span>
+                                <span id="driverPhone">+91 98112 34567</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <a href="tel:+919811234567" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm transition-colors flex items-center gap-1.5">
+                            <span>📞 Call Driver</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Stepper Progression -->
+            <div class="lg:col-span-4 bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col justify-between">
+                <div>
+                    <h3 class="font-extrabold text-slate-900 text-sm mb-6 flex items-center gap-2">
+                        <span>📦</span>
+                        <span>Order Lifecycle Stages</span>
+                    </h3>
+
+                    <div id="milestonesList" class="space-y-1">
+                        <!-- Loaded dynamically -->
+                    </div>
+                </div>
+
+                <div class="mt-6 pt-4 border-t border-slate-100 text-center">
+                    <p class="text-[11px] text-slate-400">
+                        Need assistance with this delivery? Contact our 24x7 godown helpline at <strong>support@freshgodown.uct.com</strong>
+                    </p>
+                </div>
+            </div>
+
+        </div>
+
+        {% endif %}
+
+    </main>
+
+    <!-- Tracking Script -->
+    <script src="/static/js/tracking.js"></script>
+</body>
+</html>
