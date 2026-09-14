@@ -323,17 +323,17 @@
                 </div>
             </div>
 
-            <!-- Step 3: Payment Gateway Simulation -->
+            ﻿            <!-- Step 3: Payment Gateway Simulation -->
             <div class="mb-6 pt-4 border-t border-slate-200">
                 <h3 class="text-sm font-bold text-slate-800 mb-3">
-                    3. Payment Method Integration
+                    3. Payment Method Integration (Sandbox Simulator)
                 </h3>
 
                 <!-- Tabs -->
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
                     <button type="button" id="payTab_CARD" onclick="selectPaymentMethod('CARD')" class="pay-tab border border-emerald-600 bg-emerald-50 text-emerald-800 p-2.5 rounded-xl text-xs font-bold flex flex-col items-center gap-1 transition-all">
                         <span>💳</span>
-                        <span>Credit/Debit Card</span>
+                        <span>Pre-set Test Card</span>
                     </button>
                     <button type="button" id="payTab_UPI" onclick="selectPaymentMethod('UPI')" class="pay-tab border border-slate-200 text-slate-700 p-2.5 rounded-xl text-xs font-bold flex flex-col items-center gap-1 transition-all">
                         <span>📱</span>
@@ -349,21 +349,20 @@
                     </button>
                 </div>
 
-                <!-- Card Form -->
-                <div id="cardForm" class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3 text-xs">
-                    <div>
-                        <label class="block font-semibold text-slate-700 mb-1">Card Number (Sandbox Simulated)</label>
-                        <input type="text" value="4532 8901 2345 6789" class="w-full bg-white border border-slate-200 rounded-lg p-2 font-mono">
+                <!-- Card Form (Sandbox Mock Badge - Safe & Non-Phishing) -->
+                <div id="cardForm" class="bg-emerald-50/60 p-4 rounded-2xl border border-emerald-200 space-y-2 text-xs">
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-emerald-900 flex items-center gap-1.5">
+                            <span>🛡️</span> UCT Academic Sandbox Test Card
+                        </span>
+                        <span class="bg-emerald-200 text-emerald-800 text-[10px] font-mono font-bold px-2 py-0.5 rounded">SIMULATED</span>
                     </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block font-semibold text-slate-700 mb-1">Expiry Date</label>
-                            <input type="text" value="12/28" class="w-full bg-white border border-slate-200 rounded-lg p-2 font-mono">
-                        </div>
-                        <div>
-                            <label class="block font-semibold text-slate-700 mb-1">CVV</label>
-                            <input type="password" value="888" class="w-full bg-white border border-slate-200 rounded-lg p-2 font-mono">
-                        </div>
+                    <p class="text-slate-600 text-[11px]">
+                        Safe test mode: Uses pre-configured sandbox card (•••• •••• •••• 4242). No real banking details required or collected.
+                    </p>
+                    <div class="bg-white p-2.5 rounded-xl border border-emerald-200 flex items-center justify-between font-mono text-slate-700 text-xs">
+                        <span>Visa Test Card: •••• 4242</span>
+                        <span class="text-emerald-700 font-bold">Auto-Verified ✓</span>
                     </div>
                 </div>
 
